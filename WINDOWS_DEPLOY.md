@@ -31,10 +31,19 @@ docker-compose --version
 
 #### 1.1.4 获取 Wechaty Token (可选，用于生产环境)
 
-推荐使用 Donut 协议:
-1. 访问 https://pad-local.com/
-2. 注册并购买 Token (有免费额度)
-3. 或使用免费方案: https://github.com/wechaty/wechaty-puppet-donut
+推荐使用 Paimon 协议（个人微信）或 WorkPro 协议（企业微信）：
+
+**Paimon（个人微信）：**
+1. 访问 http://120.55.60.194/ 注册获取免费 Token
+2. 或访问 https://wechaty.js.org/docs/puppet-services/paimon 了解更多
+
+**WorkPro（企业微信）：**
+1. 联系客服获取 Token：https://wechaty.js.org/assets/files/workpro-doc-qrcode-45e1720a5cf2846d7e8a930f2ceda310.webp
+
+**Token 服务平台（购买/续费）：**
+- 访问 https://token.rpachat.com/
+
+> ⚠️ 注意：Donut 协议已于 2025 年停止服务，请使用 Paimon 或 WorkPro 替代。
 
 ---
 
@@ -141,22 +150,20 @@ docker-compose up -d bot
 
 ## 三、绑定微信账号为机器人
 
-### 3.1 方案一: 使用 Donut 协议 (推荐)
+### 3.1 方案一: 使用 Paimon 协议 (推荐，用于个人微信)
 
-#### 步骤1: 获取 Donut Token
+#### 步骤1: 获取 Paimon Token
 
-1. 访问 https://pad-local.com/
-2. 注册账号
-3. 进入 Dashboard -> 创建 Token
-4. 复制 Token
+1. 访问 http://120.55.60.194/ 注册获取免费 Token
+2. 或联系 Token 服务：https://token.rpachat.com/
 
 #### 步骤2: 配置 Token
 
 编辑 `.env` 文件:
 
 ```env
-WECHATY_TOKEN=your_donut_token_here
-WECHATY_PUPPET=wechaty-puppet-donut
+WECHATY_TOKEN=your_paimon_token_here
+WECHATY_PUPPET=wechaty-puppet-paimon
 ```
 
 #### 步骤3: 重新启动机器人
