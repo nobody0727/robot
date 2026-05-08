@@ -3,33 +3,31 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: wechat_bot_postgres
+    container_name: qq_bot_postgres
     environment:
-      POSTGRES_DB: wechat_bot
+      POSTGRES_DB: qq_bot
       POSTGRES_USER: bot_admin
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-wechat_bot_secure_password_2024}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-qq_bot_secure_password_2024}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bot_admin -d wechat_bot"]
+      test: ["CMD-SHELL", "pg_isready -U bot_admin -d qq_bot"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     restart: unless-stopped
     networks:
-      - wechat_bot_network
+      - qq_bot_network
 
   redis:
     image: redis:7-alpine
-    container_name: wechat_bot_redis
-    command: redis-server /usr/local/etc/redis/redis.conf
+    container_name: qq_bot_redis
     volumes:
       - redis_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
       - "6379:6379"
     healthcheck:
@@ -40,15 +38,32 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - wechat_bot_network
+      - qq_bot_network
+
+  napcat:
+    image: registry.cn-hangzhou.aliyuncs.com/m2w/netease-napcat:latest
+    container_name: qq_bot_napcat
+    environment:
+      - NAPCAT_QQ=${BOT_QQ_NUMBER:-0}
+      - NAPCAT_PASSWORD=${BOT_QQ_PASSWORD:-}
+    volumes:
+      - napcat_data:/opt/napcat/data
+      - ./napcat/config:/opt/napcat/config:ro
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+      - "3003:3003"
+    restart: unless-stopped
+    networks:
+      - qq_bot_network
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: wechat_bot_backend
+    container_name: qq_bot_backend
     environment:
-      DATABASE_URL: postgresql://bot_admin:${DB_PASSWORD:-wechat_bot_secure_password_2024}@postgres:5432/wechat_bot
+      DATABASE_URL: postgresql://bot_admin:${DB_PASSWORD:-qq_bot_secure_password_2024}@postgres:5432/qq_bot
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-your_super_secret_jwt_key_that_should_be_at_least_32_characters_long}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
@@ -66,13 +81,13 @@ services:
       - "8000:8000"
     restart: unless-stopped
     networks:
-      - wechat_bot_network
+      - qq_bot_network
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: wechat_bot_frontend
+    container_name: qq_bot_frontend
     environment:
       VITE_API_BASE_URL: http://localhost:8000
     ports:
@@ -81,41 +96,48 @@ services:
       - backend
     restart: unless-stopped
     networks:
-      - wechat_bot_network
+      - qq_bot_network
 
   bot:
     build:
       context: ./bot
       dockerfile: Dockerfile
-    container_name: wechat_bot
+    container_name: qq_bot
     environment:
-      DATABASE_URL: postgresql://bot_admin:${DB_PASSWORD:-wechat_bot_secure_password_2024}@postgres:5432/wechat_bot
+      DATABASE_URL: postgresql://bot_admin:${DB_PASSWORD:-qq_bot_secure_password_2024}@postgres:5432/qq_bot
       REDIS_URL: redis://redis:6379
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
-      WECHATY_TOKEN: ${WECHATY_TOKEN:-}
-      WECHATY_PUPPET: ${WECHATY_PUPPET:-wechaty-puppet-paimon}
+      NAPCAT_HTTP_URL: http://napcat:3001
+      NAPCAT_WS_URL: ws://napcat:3002
+      NAPCAT_ACCESS_TOKEN: ${NAPCAT_ACCESS_TOKEN:-}
       BACKEND_URL: http://backend:8000
       AI_TEMPERATURE: ${AI_TEMPERATURE:-0.7}
       AI_MAX_TOKENS: ${AI_MAX_TOKENS:-2000}
       MESSAGE_CACHE_TTL: ${MESSAGE_CACHE_TTL:-120}
     depends_on:
+      napcat:
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       backend:
         condition: service_started
+    ports:
+      - "8080:8080"
     restart: unless-stopped
     networks:
-      - wechat_bot_network
+      - qq_bot_network
 
 volumes:
   postgres_data:
     driver: local
   redis_data:
     driver: local
+  napcat_data:
+    driver: local
 
 networks:
-  wechat_bot_network:
+  qq_bot_network:
     driver: bridge

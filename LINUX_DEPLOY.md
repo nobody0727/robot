@@ -70,21 +70,11 @@ git --version
 3. 进入 Console -> API Keys -> 创建 API Key
 4. 复制 Key 备用 (格式: sk-xxxxxxxxxx)
 
-#### 1.1.4 获取 Wechaty Token (可选，用于生产环境)
+#### 1.1.4 准备 QQ 账号
 
-推荐使用 Paimon 协议（个人微信）或 WorkPro 协议（企业微信）：
-
-**Paimon（个人微信）：**
-1. 访问 http://120.55.60.194/ 注册获取免费 Token
-2. 或访问 https://wechaty.js.org/docs/puppet-services/paimon 了解更多
-
-**WorkPro（企业微信）：**
-1. 联系客服获取 Token：https://wechaty.js.org/assets/files/workpro-doc-qrcode-45e1720a5cf2846d7e8a930f2ceda310.webp
-
-**Token 服务平台（购买/续费）：**
-- 访问 https://token.rpachat.com/
-
-> ⚠️ 注意：Donut 协议已于 2025 年停止服务，请使用 Paimon 或 WorkPro 替代。
+1. 准备一个 QQ 账号作为机器人账号
+2. 建议使用新注册的账号，避免影响主账号
+3. 确保账号已绑定手机和邮箱
 
 ---
 
@@ -95,12 +85,12 @@ git --version
 ```bash
 # 克隆项目
 git clone <项目仓库地址>
-cd wechat-bot-admin
+cd qq-bot-admin
 
 # 或者直接下载 ZIP 后解压
 # wget <项目ZIP地址>
 # unzip main.zip
-# cd wechat-bot-admin
+# cd qq-bot-admin
 ```
 
 ### 2.2 配置环境变量
@@ -129,17 +119,17 @@ JWT_SECRET=your_jwt_secret_key_at_least_32_characters_long
 # DeepSeek API Key (从 https://platform.deepseek.com 获取)
 DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
-# ============ 可选配置 ============
+# ============ QQ 机器人配置 ============
 
-# Wechaty Token (使用Paimon协议)
-WECHATY_TOKEN=your_paimon_token
+# 机器人 QQ 号
+BOT_QQ_NUMBER=123456789
 
-# Wechaty协议类型
-WECHATY_PUPPET=wechaty-puppet-paimon
+# 机器人 QQ 密码
+BOT_QQ_PASSWORD=your_qq_password
 
-# 服务地址
-BACKEND_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:3000
+# NapCatQQ 配置 (通常不需要修改)
+NAPCAT_HTTP_URL=http://napcat:3001
+NAPCAT_WS_URL=ws://napcat:3002
 ```
 
 ### 2.3 启动服务
@@ -157,7 +147,7 @@ docker compose ps
 docker compose logs -f
 
 # 查看特定服务日志
-docker compose logs -f backend
+docker compose logs -f napcat
 ```
 
 #### 方式二: 分步启动
@@ -166,33 +156,48 @@ docker compose logs -f backend
 # 1. 启动数据库和缓存
 docker compose up -d postgres redis
 
-# 2. 启动后端
+# 2. 启动 NapCatQQ
+docker compose up -d napcat
+
+# 3. 启动后端
 docker compose up -d backend
 
-# 3. 启动前端
+# 4. 启动前端
 docker compose up -d frontend
 
-# 4. 启动机器人 (需要微信扫码)
+# 5. 启动 NoneBot2 机器人
 docker compose up -d bot
 ```
 
-### 2.4 配置防火墙
+### 2.4 首次登录 NapCatQQ
+
+1. 等待 NapCatQQ 服务启动
+2. 访问 NapCat WebUI: http://服务器IP:3003
+3. 使用机器人 QQ 账号扫码或密码登录
+4. 登录成功后即可开始使用
+
+### 2.5 配置防火墙
 
 如果服务器开启了防火墙，需要开放以下端口:
 
 ```bash
 # Ubuntu (ufw)
+sudo ufw allow 3000/tcp  # NapCat WebUI
+sudo ufw allow 3001/tcp  # NapCat HTTP
+sudo ufw allow 3002/tcp  # NapCat WebSocket
+sudo ufw allow 3003/tcp  # NapCat WebUI (可选)
 sudo ufw allow 3000/tcp  # 前端
 sudo ufw allow 8000/tcp  # 后端 API
 sudo ufw reload
 
 # CentOS (firewalld)
+sudo firewall-cmd --permanent --add-port=3000-3003/tcp
 sudo firewall-cmd --permanent --add-port=3000/tcp
 sudo firewall-cmd --permanent --add-port=8000/tcp
 sudo firewall-cmd --reload
 ```
 
-### 2.5 访问服务
+### 2.6 访问服务
 
 启动成功后，通过浏览器访问:
 
@@ -201,97 +206,85 @@ sudo firewall-cmd --reload
 | 前端管理界面 | http://服务器IP:3000 | Web后台管理 |
 | API文档 | http://服务器IP:8000/docs | Swagger API文档 |
 | API健康检查 | http://服务器IP:8000/health | 检查后端状态 |
+| NapCat WebUI | http://服务器IP:3003 | QQ 登录管理 |
 
 **默认账号:** `admin` / `admin123`
 
 ---
 
-## 三、绑定微信账号为机器人
+## 三、配置 NoneBot2 与 NapCatQQ 连接
 
-### 3.1 方案一: 使用 Paimon 协议 (推荐，用于个人微信)
+### 3.1 配置 NoneBot2
 
-#### 步骤1: 获取 Paimon Token
-
-1. 访问 http://120.55.60.194/ 注册获取免费 Token
-2. 或联系 Token 服务：https://token.rpachat.com/
-
-#### 步骤2: 配置 Token
-
-编辑 `.env` 文件:
+编辑 `bot/.env` 文件:
 
 ```env
-WECHATY_TOKEN=your_paimon_token_here
-WECHATY_PUPPET=wechaty-puppet-paimon
+# NoneBot2 配置
+DRIVER=~httpx+~websockets
+COMMAND_START=[""]
+
+# NapCatQQ 连接配置
+NAPCAT_HTTP_URL=http://napcat:3001
+NAPCAT_WS_URL=ws://napcat:3002
+NAPCAT_ACCESS_TOKEN=
 ```
 
-#### 步骤3: 重新启动机器人
+### 3.2 配置 NapCatQQ
+
+编辑 `napcat/config/napcat.json`:
+
+```json
+{
+  "NapCat": {
+    "port": 3000,
+    "httpPort": 3001,
+    "wsPort": 3002,
+    "autoDeleteFile": false,
+    "enablePerRequestAgent": false,
+    "enableQrcode": true
+  },
+  "account": {
+    "uin": "你的QQ号",
+    "password": "你的QQ密码",
+    "protocol": "mac"
+  }
+}
+```
+
+### 3.3 验证连接
 
 ```bash
-# 重启 bot 服务
-docker compose restart bot
+# 查看 NapCat 日志
+docker compose logs -f napcat
 
-# 查看日志确认登录状态
+# 查看 NoneBot2 日志
 docker compose logs -f bot
 ```
 
-#### 步骤4: 扫码登录
-
-首次启动时，机器人需要微信扫码授权:
-
-1. 查看 Docker 日志获取二维码:
-```bash
-docker compose logs bot
-```
-
-2. 会看到类似输出:
-```
-[Wechaty] 📢 登录二维码:
-https://qrlogin.wechat.com/qrcode/xxxxx
-```
-
-3. 用微信扫描二维码确认登录
-
-4. 登录成功后，日志显示:
-```
-[Wechaty] ✅ 已登录，昵称: 你的微信昵称
-```
-
 ---
 
-### 3.2 方案二: 使用 WorkPro 协议 (企业微信)
-
-适用于企业微信账号:
-
-```env
-WECHATY_PUPPET=wechaty-puppet-workpro
-WECHATY_TOKEN=your_workpro_token
-```
-
----
-
-### 3.3 使用系统服务管理机器人 (生产环境推荐)
+## 四、使用系统服务管理机器人 (生产环境推荐)
 
 创建 systemd 服务文件，确保机器人开机自启:
 
 ```bash
-sudo nano /etc/systemd/system/wechat-bot.service
+sudo nano /etc/systemd/system/qq-bot.service
 ```
 
 写入以下内容:
 
 ```ini
 [Unit]
-Description=Wechaty Bot Service
+Description=QQ Bot Service
 Requires=docker.service
 After=docker.service network.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/path/to/wechat-bot-admin
-ExecStart=/usr/bin/docker compose up -d bot
-ExecStop=/usr/bin/docker compose stop bot
-ExecReload=/usr/bin/docker compose restart bot
+WorkingDirectory=/path/to/qq-bot-admin
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose stop
 User=your_user
 Group=docker
 
@@ -306,23 +299,23 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 
 # 启用服务（开机自启）
-sudo systemctl enable wechat-bot
+sudo systemctl enable qq-bot
 
 # 启动服务
-sudo systemctl start wechat-bot
+sudo systemctl start qq-bot
 
 # 查看状态
-sudo systemctl status wechat-bot
+sudo systemctl status qq-bot
 
 # 查看日志
-sudo journalctl -u wechat-bot -f
+sudo journalctl -u qq-bot -f
 ```
 
 ---
 
-## 四、配置 Nginx 反向代理 (可选，生产环境推荐)
+## 五、配置 Nginx 反向代理 (可选，生产环境推荐)
 
-### 4.1 安装 Nginx
+### 5.1 安装 Nginx
 
 ```bash
 # Ubuntu / Debian
@@ -332,10 +325,10 @@ sudo apt install -y nginx
 sudo yum install -y nginx
 ```
 
-### 4.2 配置反向代理
+### 5.2 配置反向代理
 
 ```bash
-sudo nano /etc/nginx/sites-available/wechat-bot
+sudo nano /etc/nginx/sites-available/qq-bot
 ```
 
 写入以下配置:
@@ -343,15 +336,13 @@ sudo nano /etc/nginx/sites-available/wechat-bot
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;  # 替换为你的域名
+    server_name your-domain.com;
 
     # 前端
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # 后端 API
@@ -359,16 +350,11 @@ server {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # WebSocket 支持 (如需要)
-    location /ws {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+    # NapCat WebUI
+    location /napcat {
+        proxy_pass http://127.0.0.1:3003;
         proxy_set_header Host $host;
     }
 }
@@ -378,18 +364,17 @@ server {
 
 ```bash
 # Ubuntu / Debian
-sudo ln -s /etc/nginx/sites-available/wechat-bot /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/qq-bot /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 
 # CentOS / RHEL
-sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.bak
-sudo mv wechat-bot /etc/nginx/conf.d/
+sudo mv qq-bot /etc/nginx/conf.d/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 4.3 配置 HTTPS (使用 Let's Encrypt)
+### 5.3 配置 HTTPS (使用 Let's Encrypt)
 
 ```bash
 # 安装 certbot
@@ -401,30 +386,6 @@ sudo certbot --nginx -d your-domain.com
 # 自动续期测试
 sudo certbot renew --dry-run
 ```
-
----
-
-## 五、验证机器人功能
-
-### 5.1 私聊测试
-
-1. 在微信中找到机器人 (搜索微信号或扫码)
-2. 发送任意消息
-3. **白名单用户**: 会收到AI回复
-4. **非白名单用户**: 收到权限拒绝提示
-
-### 5.2 群聊测试
-
-1. 让白名单用户邀请机器人加入群聊
-2. 在群内 @机器人 + 问题
-3. 机器人会回复AI答案
-
-### 5.3 后台验证
-
-1. 访问 http://服务器IP:3000
-2. 登录后进入 "群组管理"
-3. 应能看到机器人所在的群聊
-4. 进入 "消息管理" 应能看到聊天记录
 
 ---
 
@@ -454,27 +415,24 @@ sudo usermod -aG docker $USER
 **解决:**
 ```bash
 # 查找占用端口的进程
-sudo lsof -i :3000
+sudo lsof -i :3001
 sudo lsof -i :8000
-
-# 或使用 netstat
-sudo netstat -tlnp | grep 3000
 
 # 结束进程或修改 docker-compose.yml 中的端口
 ```
 
-### 6.3 微信扫码登录失败
+### 6.3 QQ 登录失败
 
-**问题:** 二维码无法扫描或扫描后提示登录异常
+**问题:** NapCatQQ 无法登录
 
 **解决:**
-1. 确保微信账号已实名认证
-2. 检查是否被微信限制登录
-3. 尝试更换网络环境
-4. 确认 Paimon Token 有效
-5. 检查服务器时间是否正确: `timedatectl`
+1. 确保 QQ 账号密码正确
+2. 检查是否需要验证（扫码登录更稳定）
+3. 确保账号没有异常封禁
+4. 尝试使用不同的协议（mac/windows）
+5. 查看 NapCat 日志: `docker compose logs napcat`
 
-### 6.4 AI功能不工作
+### 6.4 AI 功能不工作
 
 **问题:** 机器人不回复或回复"AI服务暂不可用"
 
@@ -532,85 +490,41 @@ docker compose down --rmi all -v
 # 删除未使用的镜像和容器
 docker system prune -a
 
-# 完全清理（包括所有未使用的镜像、容器、网络）
+# 完全清理
 docker system prune -a --volumes
 ```
 
 ---
 
-## 八、性能优化 (可选)
+## 八、数据备份
 
-### 8.1 修改 AI 响应参数
-
-编辑 `backend/app/services/ai_service.py`:
-
-```python
-temperature: 0.7,  # 0-1，越低越稳定
-max_tokens: 2000,  # 最大回复长度
-```
-
-### 8.2 调整消息缓存时间
-
-编辑 `bot/src/config.py`:
-
-```python
-MESSAGE_CACHE_TTL: int = 120  # 缓存秒数，默认2分钟
-```
-
-### 8.3 修改上下文轮数
-
-```python
-AI_CONTEXT_GROUP: int = 10    # 群聊保留10轮
-AI_CONTEXT_PRIVATE: int = 20  # 私聊保留20轮
-```
-
-### 8.4 调整 Docker 资源限制
-
-编辑 `docker-compose.yml` 为数据库等服务添加资源限制:
-
-```yaml
-services:
-  postgres:
-    # ... 其他配置
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-```
-
----
-
-## 九、数据备份
-
-### 9.1 备份数据库
+### 8.1 备份数据库
 
 ```bash
 # 创建备份目录
 mkdir -p ~/backups
 
 # 备份 PostgreSQL
-docker compose exec -T postgres pg_dump -U bot_admin wechat_bot > ~/backups/wechat_bot_$(date +%Y%m%d_%H%M%S).sql
+docker compose exec -T postgres pg_dump -U bot_admin qq_bot > ~/backups/qq_bot_$(date +%Y%m%d_%H%M%S).sql
 
 # 或压缩备份
-docker compose exec -T postgres pg_dump -U bot_admin wechat_bot | gzip > ~/backups/wechat_bot_$(date +%Y%m%d).sql.gz
+docker compose exec -T postgres pg_dump -U bot_admin qq_bot | gzip > ~/backups/qq_bot_$(date +%Y%m%d).sql.gz
 ```
 
-### 9.2 恢复数据库
+### 8.2 恢复数据库
 
 ```bash
 # 停止服务
 docker compose stop backend bot
 
 # 恢复数据
-gunzip < ~/backups/wechat_bot_20240101.sql.gz | docker compose exec -T postgres psql -U bot_admin wechat_bot
+gunzip < ~/backups/qq_bot_20240101.sql.gz | docker compose exec -T postgres psql -U bot_admin qq_bot
 
 # 重启服务
 docker compose start backend bot
 ```
 
-### 9.3 自动备份脚本
+### 8.3 自动备份脚本
 
 创建定时备份脚本 `/opt/scripts/backup.sh`:
 
@@ -618,16 +532,16 @@ docker compose start backend bot
 #!/bin/bash
 BACKUP_DIR="/opt/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
-CONTAINER_NAME="wechat_bot_postgres"
-DB_NAME="wechat_bot"
+CONTAINER_NAME="qq_bot_postgres"
+DB_NAME="qq_bot"
 DB_USER="bot_admin"
 
 mkdir -p $BACKUP_DIR
 
-docker compose exec -T $CONTAINER_NAME pg_dump -U $DB_USER $DB_NAME | gzip > $BACKUP_DIR/wechat_bot_$DATE.sql.gz
+docker compose exec -T $CONTAINER_NAME pg_dump -U $DB_USER $DB_NAME | gzip > $BACKUP_DIR/qq_bot_$DATE.sql.gz
 
 # 保留最近 30 天备份
-find $BACKUP_DIR -name "wechat_bot_*.sql.gz" -mtime +30 -delete
+find $BACKUP_DIR -name "qq_bot_*.sql.gz" -mtime +30 -delete
 
 echo "Backup completed: $DATE"
 ```
@@ -636,14 +550,12 @@ echo "Backup completed: $DATE"
 
 ```bash
 chmod +x /opt/scripts/backup.sh
-
-# 每天凌晨 3 点执行备份
-echo "0 3 * * * /opt/scripts/backup.sh" | sudo tee /etc/cron.d/wechat-bot-backup
+echo "0 3 * * * /opt/scripts/backup.sh" | sudo tee /etc/cron.d/qq-bot-backup
 ```
 
 ---
 
-## 十、联系与支持
+## 九、联系与支持
 
 - 项目文档: 查看 `README.md`
 - 技术问题: 查看 `SPEC.md`

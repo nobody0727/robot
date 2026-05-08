@@ -29,21 +29,11 @@ docker-compose --version
 3. 进入 Console -> API Keys -> 创建 API Key
 4. 复制 Key 备用 (格式: sk-xxxxxxxxxx)
 
-#### 1.1.4 获取 Wechaty Token (可选，用于生产环境)
+#### 1.1.4 准备 QQ 账号
 
-推荐使用 Paimon 协议（个人微信）或 WorkPro 协议（企业微信）：
-
-**Paimon（个人微信）：**
-1. 访问 http://120.55.60.194/ 注册获取免费 Token
-2. 或访问 https://wechaty.js.org/docs/puppet-services/paimon 了解更多
-
-**WorkPro（企业微信）：**
-1. 联系客服获取 Token：https://wechaty.js.org/assets/files/workpro-doc-qrcode-45e1720a5cf2846d7e8a930f2ceda310.webp
-
-**Token 服务平台（购买/续费）：**
-- 访问 https://token.rpachat.com/
-
-> ⚠️ 注意：Donut 协议已于 2025 年停止服务，请使用 Paimon 或 WorkPro 替代。
+1. 准备一个 QQ 账号作为机器人账号
+2. 建议使用新注册的账号，避免影响主账号
+3. 确保账号已绑定手机和邮箱
 
 ---
 
@@ -56,7 +46,7 @@ docker-compose --version
 ```powershell
 # 方式1: 如果已安装Git
 git clone <项目仓库地址>
-cd wechat-bot-admin
+cd qq-bot-admin
 
 # 方式2: 直接下载ZIP后解压
 # 下载项目ZIP后解压到任意目录
@@ -68,7 +58,7 @@ cd wechat-bot-admin
 
 ```powershell
 # 进入项目目录
-cd wechat-bot-admin
+cd qq-bot-admin
 
 # 创建.env文件
 copy .env.example .env
@@ -88,17 +78,13 @@ JWT_SECRET=your_jwt_secret_key_at_least_32_characters_long
 # DeepSeek API Key (从 https://platform.deepseek.com 获取)
 DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
-# ============ 可选配置 ============
+# ============ QQ 机器人配置 ============
 
-# Wechaty Token (使用Paimon协议)
-WECHATY_TOKEN=your_paimon_token
+# 机器人 QQ 号
+BOT_QQ_NUMBER=123456789
 
-# Wechaty协议类型
-WECHATY_PUPPET=wechaty-puppet-paimon
-
-# 服务地址
-BACKEND_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:3000
+# 机器人 QQ 密码
+BOT_QQ_PASSWORD=your_qq_password
 ```
 
 ### 2.3 启动服务
@@ -124,17 +110,27 @@ docker-compose logs -f
 # 1. 启动数据库和缓存
 docker-compose up -d postgres redis
 
-# 2. 启动后端
+# 2. 启动 NapCatQQ
+docker-compose up -d napcat
+
+# 3. 启动后端
 docker-compose up -d backend
 
-# 3. 启动前端
+# 4. 启动前端
 docker-compose up -d frontend
 
-# 4. 启动机器人 (需要微信扫码)
+# 5. 启动机器人
 docker-compose up -d bot
 ```
 
-### 2.4 访问服务
+### 2.4 首次登录 NapCatQQ
+
+1. 等待 NapCatQQ 服务启动
+2. 访问 NapCat WebUI: http://localhost:3003
+3. 使用机器人 QQ 账号扫码或密码登录
+4. 登录成功后即可开始使用
+
+### 2.5 访问服务
 
 启动成功后，浏览器访问:
 
@@ -143,30 +139,48 @@ docker-compose up -d bot
 | 前端管理界面 | http://localhost:3000 | Web后台管理 |
 | API文档 | http://localhost:8000/docs | Swagger API文档 |
 | API健康检查 | http://localhost:8000/health | 检查后端状态 |
+| NapCat WebUI | http://localhost:3003 | QQ 登录管理 |
 
 **默认账号:** `admin` / `admin123`
 
 ---
 
-## 三、绑定微信账号为机器人
+## 三、配置说明
 
-### 3.1 方案一: 使用 Paimon 协议 (推荐，用于个人微信)
+### 3.1 NapCatQQ 配置
 
-#### 步骤1: 获取 Paimon Token
+编辑 `napcat/config/napcat.json`:
 
-1. 访问 http://120.55.60.194/ 注册获取免费 Token
-2. 或联系 Token 服务：https://token.rpachat.com/
-
-#### 步骤2: 配置 Token
-
-编辑 `.env` 文件:
-
-```env
-WECHATY_TOKEN=your_paimon_token_here
-WECHATY_PUPPET=wechaty-puppet-paimon
+```json
+{
+  "NapCat": {
+    "port": 3000,
+    "httpPort": 3001,
+    "wsPort": 3002,
+    "autoDeleteFile": false,
+    "enablePerRequestAgent": false,
+    "enableQrcode": true
+  },
+  "account": {
+    "uin": "你的QQ号",
+    "password": "你的QQ密码",
+    "protocol": "mac"
+  }
+}
 ```
 
-#### 步骤3: 重新启动机器人
+### 3.2 NoneBot2 配置
+
+编辑 `bot/.env`:
+
+```env
+DRIVER=~httpx+~websockets
+COMMAND_START=[""]
+NAPCAT_HTTP_URL=http://napcat:3001
+NAPCAT_WS_URL=ws://napcat:3002
+```
+
+### 3.3 重新启动机器人
 
 ```powershell
 # 重启bot服务
@@ -176,69 +190,13 @@ docker-compose restart bot
 docker-compose logs -f bot
 ```
 
-#### 步骤4: 扫码登录
-
-首次启动时，机器人需要微信扫码授权:
-
-1. 查看Docker日志获取二维码:
-```powershell
-docker-compose logs bot
-```
-
-2. 会看到类似输出:
-```
-[Wechaty] 📢 登录二维码:
-https://qrlogin.wechat.com/qrcode/xxxxx
-```
-
-3. 用微信扫描二维码确认登录
-
-4. 登录成功后，日志显示:
-```
-[Wechaty] ✅ 已登录，昵称: 你的微信昵称
-```
-
----
-
-### 3.2 方案二: 使用 WorkPro 协议 (企业微信)
-
-适用于企业微信账号:
-
-```env
-WECHATY_PUPPET=wechaty-puppet-workpro
-WECHATY_TOKEN=your_workpro_token
-```
-
----
-
-### 3.3 方案三: 本地开发模式 (不推荐生产环境)
-
-适用于调试，直接在本地机器运行:
-
-```powershell
-# 克隆项目后
-cd bot
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 设置环境变量
-export DEEPSEEK_API_KEY=your_key
-export WECHATY_PUPPET=wechaty-puppet-local
-
-# 运行机器人
-python -m bot.src.main
-```
-
-> ⚠️ 本地模式需要保持终端连接，不适合服务器部署
-
 ---
 
 ## 四、验证机器人功能
 
 ### 4.1 私聊测试
 
-1. 在微信中找到机器人 (搜索微信号或扫码)
+1. 在 QQ 中找到机器人账号
 2. 发送任意消息
 3. **白名单用户**: 会收到AI回复
 4. **非白名单用户**: 收到权限拒绝提示
@@ -276,23 +234,24 @@ python -m bot.src.main
 **解决:**
 ```powershell
 # 查找占用端口的进程
-netstat -ano | findstr ":3000"
+netstat -ano | findstr ":3001"
 netstat -ano | findstr ":8000"
 
 # 结束进程或修改docker-compose.yml中的端口
 ```
 
-### 5.3 微信扫码登录失败
+### 5.3 QQ 登录失败
 
-**问题:** 二维码无法扫描或扫描后提示登录异常
+**问题:** NapCatQQ 无法登录
 
 **解决:**
-1. 确保微信账号已实名认证
-2. 检查是否被微信限制登录
-3. 尝试更换网络环境
-4. 确认Paimon Token有效
+1. 确保 QQ 账号密码正确
+2. 检查是否需要验证（扫码登录更稳定）
+3. 确保账号没有异常封禁
+4. 尝试使用不同的协议（mac/windows）
+5. 查看 NapCat 日志: `docker-compose logs napcat`
 
-### 5.4 AI功能不工作
+### 5.4 AI 功能不工作
 
 **问题:** 机器人不回复或回复"AI服务暂不可用"
 
@@ -356,7 +315,7 @@ max_tokens: 2000,  # 最大回复长度
 
 ### 7.2 调整消息缓存时间
 
-编辑 `bot/src/config.py`:
+编辑 `bot/src/utils/config.py`:
 
 ```python
 MESSAGE_CACHE_TTL: int = 120  # 缓存秒数，默认2分钟
@@ -377,4 +336,4 @@ AI_CONTEXT_PRIVATE: int = 20  # 私聊保留20轮
 - 技术问题: 查看 `SPEC.md`
 - API调试: http://localhost:8000/docs
 
-祝部署顺利！🎉
+祝部署顺利！

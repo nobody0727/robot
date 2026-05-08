@@ -1,17 +1,17 @@
-# 微信机器人后台管理系统
+# QQ 机器人后台管理系统
 
-一套低成本的微信机器人系统，支持文本消息处理、免费大模型AI对话、白名单权限控制，以及完整的Web后台管理界面。
+一套低成本的 QQ 机器人系统，支持文本消息处理、免费大模型 AI 对话、白名单权限控制，以及完整的 Web 后台管理界面。
 
 ## 功能特性
 
-### 微信机器人功能
+### QQ 机器人功能
 
 - **撤回消息恢复** - 监听群聊撤回消息，自动从缓存恢复并发送
-- **AI语义搜索** - 智能扩展查询，结合向量相似度和关键词匹配
-- **消息持久化** - 7天滚动保存，仅文本消息
+- **AI 语义搜索** - 智能扩展查询，结合向量相似度和关键词匹配
+- **消息持久化** - 7 天滚动保存，仅文本消息
 - **入群欢迎** - 自动发送欢迎语
 - **退群提醒** - 通知群主/管理员
-- **AI对话** - 群聊@机器人、私聊对话（需白名单）
+- **AI 对话** - 群聊 @机器人、私聊对话（需白名单）
 - **上下文记忆** - 多轮对话支持
 
 ### 白名单机制
@@ -20,13 +20,13 @@
 |------|---------|
 | 私聊机器人 | 必须白名单 |
 | 邀请入群 | 必须白名单 |
-| 群聊@机器人 | 无需白名单 |
+| 群聊 @机器人 | 无需白名单 |
 
 ### 后台管理功能
 
-- JWT Token认证 + 三级权限控制
+- JWT Token 认证 + 三级权限控制
 - 白名单管理（添加/移除/导入/导出）
-- 群组管理（配置欢迎语、AI参数）
+- 群组管理（配置欢迎语、AI 参数）
 - 消息查询与统计
 - 语义搜索
 - 数据分析仪表盘
@@ -36,12 +36,12 @@
 
 | 组件 | 技术选型 |
 |------|---------|
-| 微信接入 | Wechaty + Paimon协议 |
-| 后端API | FastAPI (Python 3.11) |
+| QQ 接入 | NapCatQQ + NoneBot2 (OneBot11) |
+| 后端 API | FastAPI (Python 3.11) |
 | 前端 | React 18 + Ant Design 5 |
 | 数据库 | PostgreSQL 15 + pgvector |
 | 缓存 | Redis 7 |
-| AI接口 | DeepSeek V4-Flash (免费版) |
+| AI 接口 | DeepSeek V4-Flash (免费版) |
 | 部署 | Docker + Docker Compose |
 
 ## 快速开始
@@ -50,12 +50,13 @@
 
 - Docker & Docker Compose
 - DeepSeek API Key（免费获取）
+- QQ 账号（用于登录机器人）
 
 ### 1. 克隆项目
 
 ```bash
 git clone <repository-url>
-cd wechat-bot-admin
+cd qq-bot-admin
 ```
 
 ### 2. 配置环境变量
@@ -70,7 +71,8 @@ cp .env.example .env
 DB_PASSWORD=your_secure_password
 JWT_SECRET=your_jwt_secret_min_32_chars
 DEEPSEEK_API_KEY=your_deepseek_api_key
-WECHATY_TOKEN=your_wechaty_token
+BOT_QQ_NUMBER=123456789
+BOT_QQ_PASSWORD=your_qq_password
 ```
 
 ### 3. 启动服务
@@ -79,16 +81,22 @@ WECHATY_TOKEN=your_wechaty_token
 docker-compose up -d
 ```
 
-### 4. 访问后台
+### 4. 首次登录 NapCatQQ
+
+1. 访问 NapCat WebUI: http://localhost:3000
+2. 使用 QQ 账号扫码登录
+3. 登录成功后即可开始使用
+
+### 5. 访问后台
 
 - 前端地址：http://localhost:3000
-- API文档：http://localhost:8000/docs
+- API 文档：http://localhost:8000/docs
 - 默认账号：`admin` / `admin123`
 
 ## 项目结构
 
 ```
-wechat-bot-admin/
+qq-bot-admin/
 ├── backend/              # FastAPI 后端服务
 │   ├── app/
 │   │   ├── api/         # API 路由
@@ -99,12 +107,15 @@ wechat-bot-admin/
 │   │   └── main.py        # 入口文件
 │   └── requirements.txt
 │
-├── bot/                 # 微信机器人
+├── bot/                 # NoneBot2 QQ 机器人
 │   ├── src/
-│   │   ├── handlers/    # 消息处理器
-│   │   ├── services/     # 服务层
-│   │   └── main.py       # 入口文件
+│   │   ├── plugins/    # NoneBot2 插件
+│   │   ├── services/    # 服务层
+│   │   └── utils/       # 工具函数
+│   ├── nonebot.ini      # NoneBot2 配置
 │   └── requirements.txt
+│
+├── napcat/              # NapCatQQ 配置
 │
 ├── frontend/            # React 前端
 │   ├── src/
@@ -176,21 +187,21 @@ POST /api/search/keyword      # 关键词搜索
 
 ## 配置说明
 
-### AI休眠时段
+### AI 休眠时段
 
-默认 23:00 - 07:00 AI自动休眠，不响应群聊消息。
+默认 23:00 - 07:00 AI 自动休眠，不响应群聊消息。
 
 ### 消息缓存
 
-- Redis缓存最近2分钟的消息
+- Redis 缓存最近 2 分钟的消息
 - 用于撤回消息恢复
 - 过期自动清理
 
 ### 上下文记忆
 
-- 群聊：保留最近10轮对话
-- 私聊：保留最近20轮对话
-- TTL：24小时
+- 群聊：保留最近 10 轮对话
+- 私聊：保留最近 20 轮对话
+- TTL：24 小时
 
 ## 开发指南
 
@@ -215,7 +226,7 @@ npm run dev
 ```bash
 cd bot
 pip install -r requirements.txt
-python -m bot.src.main
+nb run
 ```
 
 ## 生产部署
@@ -228,10 +239,10 @@ python -m bot.src.main
 
 ## 注意事项
 
-1. **安全**：修改默认密码和JWT密钥
-2. **微信协议**：遵守微信使用规范
-3. **AI成本**：DeepSeek V4-Flash免费，但有调用限制
-4. **数据备份**：定期备份PostgreSQL数据
+1. **安全**：修改默认密码和 JWT 密钥
+2. **QQ 协议**：遵守 QQ 使用规范，避免频繁操作
+3. **AI 成本**：DeepSeek V4-Flash 免费，但有调用限制
+4. **数据备份**：定期备份 PostgreSQL 数据
 
 ## License
 
