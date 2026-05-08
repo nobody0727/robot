@@ -1,0 +1,15 @@
+{
+  "NapCat": {
+    "port": 3000,
+    "httpPort": 3001,
+    "wsPort": 3002,
+    "autoDeleteFile": false,
+    "enablePerRequestAgent": false,
+    "enableQrcode": true
+  },
+  "account": {
+    "uin": "${BOT_QQ_NUMBER}",
+    "password": "${BOT_QQ_PASSWORD}",
+    "protocol": "mac"
+  }
+}

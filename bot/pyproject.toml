@@ -1,0 +1,11 @@
+{
+  "name": "qq-bot",
+  "version": "1.0.0",
+  "description": "QQ Bot powered by NoneBot2",
+  "requires": ["nonebot2>=2.0.0", "nonebot-adapter-onebot11"],
+  "scripts": {
+    "dev": "nonebot dev",
+    "build": "nonebot build",
+    "run": "nonebot run"
+  }
+}
