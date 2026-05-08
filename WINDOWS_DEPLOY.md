@@ -90,11 +90,11 @@ DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
 # ============ 可选配置 ============
 
-# Wechaty Token (使用Donut协议)
-WECHATY_TOKEN=your_donut_token
+# Wechaty Token (使用Paimon协议)
+WECHATY_TOKEN=your_paimon_token
 
 # Wechaty协议类型
-WECHATY_PUPPET=wechaty-puppet-donut
+WECHATY_PUPPET=wechaty-puppet-paimon
 
 # 服务地址
 BACKEND_URL=http://localhost:8000
@@ -200,13 +200,13 @@ https://qrlogin.wechat.com/qrcode/xxxxx
 
 ---
 
-### 3.2 方案二: 使用 WXwork 协议 (企业微信)
+### 3.2 方案二: 使用 WorkPro 协议 (企业微信)
 
 适用于企业微信账号:
 
 ```env
-WECHATY_PUPPET=wechaty-puppet-wxwork
-WECHATY_TOKEN=your_wxwork_token
+WECHATY_PUPPET=wechaty-puppet-workpro
+WECHATY_TOKEN=your_workpro_token
 ```
 
 ---
@@ -290,7 +290,7 @@ netstat -ano | findstr ":8000"
 1. 确保微信账号已实名认证
 2. 检查是否被微信限制登录
 3. 尝试更换网络环境
-4. 确认Donut Token有效
+4. 确认Paimon Token有效
 
 ### 5.4 AI功能不工作
 

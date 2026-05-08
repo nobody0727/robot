@@ -36,7 +36,7 @@
 
 | 组件 | 技术选型 |
 |------|---------|
-| 微信接入 | Wechaty + Donut协议 |
+| 微信接入 | Wechaty + Paimon协议 |
 | 后端API | FastAPI (Python 3.11) |
 | 前端 | React 18 + Ant Design 5 |
 | 数据库 | PostgreSQL 15 + pgvector |
