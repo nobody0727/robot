@@ -31,10 +31,10 @@ docker-compose --version
 
 #### 1.1.4 获取 Wechaty Token (可选，用于生产环境)
 
-推荐使用 PadLocal 协议:
+推荐使用 Donut 协议:
 1. 访问 https://pad-local.com/
 2. 注册并购买 Token (有免费额度)
-3. 或使用免费方案: https://github.com/wechaty/wechaty-puppet-padlocal
+3. 或使用免费方案: https://github.com/wechaty/wechaty-puppet-donut
 
 ---
 
@@ -81,11 +81,11 @@ DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
 # ============ 可选配置 ============
 
-# Wechaty Token (使用PadLocal协议)
-WECHATY_TOKEN=your_padlocal_token
+# Wechaty Token (使用Donut协议)
+WECHATY_TOKEN=your_donut_token
 
 # Wechaty协议类型
-WECHATY_PUPPET=wechaty-puppet-padlocal
+WECHATY_PUPPET=wechaty-puppet-donut
 
 # 服务地址
 BACKEND_URL=http://localhost:8000
@@ -141,9 +141,9 @@ docker-compose up -d bot
 
 ## 三、绑定微信账号为机器人
 
-### 3.1 方案一: 使用 PadLocal 协议 (推荐，稳定)
+### 3.1 方案一: 使用 Donut 协议 (推荐)
 
-#### 步骤1: 获取 PadLocal Token
+#### 步骤1: 获取 Donut Token
 
 1. 访问 https://pad-local.com/
 2. 注册账号
@@ -155,8 +155,8 @@ docker-compose up -d bot
 编辑 `.env` 文件:
 
 ```env
-WECHATY_TOKEN=your_padlocal_token_here
-WECHATY_PUPPET=wechaty-puppet-padlocal
+WECHATY_TOKEN=your_donut_token_here
+WECHATY_PUPPET=wechaty-puppet-donut
 ```
 
 #### 步骤3: 重新启动机器人
@@ -283,7 +283,7 @@ netstat -ano | findstr ":8000"
 1. 确保微信账号已实名认证
 2. 检查是否被微信限制登录
 3. 尝试更换网络环境
-4. 确认PadLocal Token有效
+4. 确认Donut Token有效
 
 ### 5.4 AI功能不工作
 

@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
     
     WECHATY_TOKEN: str = os.getenv("WECHATY_TOKEN", "")
-    WECHATY_PUPPET: str = os.getenv("WECHATY_PUPPET", "wechaty-puppet-padlocal")
+    WECHATY_PUPPET: str = os.getenv("WECHATY_PUPPET", "wechaty-puppet-donut")
     
     AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", "0.7"))
     AI_MAX_TOKENS: int = int(os.getenv("AI_MAX_TOKENS", "2000"))

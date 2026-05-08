@@ -1,5 +1,5 @@
 wechaty==0.11.2
-wechaty-puppet-padlocal==0.0.17
+wechaty-puppet-donut==1.4.3
 wechaty-puppet==0.0.20
 python-dotenv==1.0.0
 sqlalchemy==2.0.25

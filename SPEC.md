@@ -877,7 +877,7 @@ DEEPSEEK_BASE_URL=https://api.deepseek.com
 
 # Wechaty (可选)
 WECHATY_TOKEN=your_wechaty_token
-WECHATY_PUPPET=wechaty-puppet-padlocal
+WECHATY_PUPPET=wechaty-puppet-donut
 
 # Redis
 REDIS_PASSWORD=
